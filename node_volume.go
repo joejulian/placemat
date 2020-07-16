@@ -5,7 +5,10 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
+	"github.com/cybozu-go/topolvm/lvmd/command"
 	"github.com/cybozu-go/well"
 )
 
@@ -20,6 +23,10 @@ type NodeVolumeSpec struct {
 	Folder        string `json:"folder,omitempty"`
 	CopyOnWrite   bool   `json:"copy-on-write,omitempty"`
 }
+
+const (
+	vgName = "localssd"
+)
 
 // NodeVolume defines the interface for Node volumes.
 type NodeVolume interface {
@@ -212,19 +219,43 @@ func (v *rawVolume) Resolve(c *Cluster) error {
 }
 
 func (v *rawVolume) Create(ctx context.Context, dataDir string) ([]string, error) {
-	p := volumePath(dataDir, v.name)
-	_, err := os.Stat(p)
-	switch {
-	case os.IsNotExist(err):
-		err = well.CommandContext(ctx, "qemu-img", "create", "-f", "qcow2", p, v.size).Run()
+	vg, err := command.FindVolumeGroup(vgName)
+	if err != nil {
+		return nil, err
+	}
+	lvName := filepath.Base(dataDir) + "-" + v.name
+	lv, err := vg.FindVolume(lvName)
+	switch err {
+	case command.ErrNotFound:
+		var size uint64
+		if strings.HasSuffix(v.size, "G") {
+			s, err := strconv.Atoi(strings.TrimSuffix(v.size, "G"))
+			if err != nil {
+				return nil, err
+			}
+			size = uint64(s) * 1024 * 1024 * 1024
+		} else {
+			size, err = strconv.ParseUint(v.size, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+		}
+		lv, err = vg.CreateVolume(v.name, size, nil)
 		if err != nil {
 			return nil, err
 		}
-	case err == nil:
+	case nil:
 	default:
 		return nil, err
 	}
-	return v.qemuArgs(p), nil
+	return v.qemuArgs(lv.Path()), nil
+}
+
+func (v *rawVolume) qemuArgs(p string) []string {
+	return []string{
+		"-drive",
+		"if=virtio,cache=none,aio=native,format=raw,file=" + p,
+	}
 }
 
 type vvfatVolume struct {
