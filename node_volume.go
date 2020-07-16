@@ -240,7 +240,7 @@ func (v *rawVolume) Create(ctx context.Context, dataDir string) ([]string, error
 				return nil, err
 			}
 		}
-		lv, err = vg.CreateVolume(v.name, size, nil)
+		lv, err = vg.CreateVolume(lvName, size, nil)
 		if err != nil {
 			return nil, err
 		}
