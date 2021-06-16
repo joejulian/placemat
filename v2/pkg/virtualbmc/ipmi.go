@@ -135,7 +135,7 @@ func (i *ipmi) handle() ([]byte, error) {
 	case ipmiNetFNGroupExtension:
 		log.Info("    ipmi: NetFunction = GROUP EXTENSION", map[string]interface{}{})
 		code := completionCodeOK
-		res := []byte{byte(0xdc)}
+		res := []byte{i.message.Data[0], byte(3)}
 		return appendIPMIMessageHeader(i.message, res, ipmiNetFNGroupExtension|ipmiNetFNResponse, code)
 	case ipmiNetFNOEMGroup:
 		log.Info("    ipmi: NetFunction = OEM GROUP", map[string]interface{}{})
