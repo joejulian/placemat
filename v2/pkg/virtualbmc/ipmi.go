@@ -134,6 +134,9 @@ func (i *ipmi) handle() ([]byte, error) {
 		log.Info("    ipmi: NetFunction = TRANSPORT", map[string]interface{}{})
 	case ipmiNetFNGroupExtension:
 		log.Info("    ipmi: NetFunction = GROUP EXTENSION", map[string]interface{}{})
+		code := completionCodeOK
+		res := []byte{byte(0xdc)}
+		return appendIPMIMessageHeader(i.message, res, ipmiNetFNChassis|ipmiNetFNResponse, code)
 	case ipmiNetFNOEMGroup:
 		log.Info("    ipmi: NetFunction = OEM GROUP", map[string]interface{}{})
 	default:
