@@ -129,6 +129,16 @@ func (i *ipmi) handleIPMIApp(message *ipmiMessage) ([]byte, error) {
 		return nil, i.handleIPMICloseSession(message)
 	case ipmiCmdGetDeviceID:
 		log.Info("      ipmi APP: Command = IPMI_CMD_GET_DEVICE_ID", map[string]interface{}{})
+		return []byte{
+			byte(completionCodeOK),
+			byte(0),                   // Firmware revision 1
+			byte(0),                   // Firmware revision 2
+			byte(2),                   // IPMI Version
+			byte(0b10000000),          // Additional Device Support
+			byte(0), byte(0), byte(0), // Manufacturer ID
+			byte(0), byte(0), // Product ID
+			byte(0), byte(0), byte(0), byte(0), // Auxiliary Firmware Revision Information
+		}, nil
 	case ipmiCmdColdReset:
 		log.Info("      ipmi APP: Command = IPMI_CMD_COLD_RESET", map[string]interface{}{})
 	case ipmiCmdWarmReset:
