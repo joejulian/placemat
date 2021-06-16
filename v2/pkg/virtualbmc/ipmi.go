@@ -103,6 +103,7 @@ func deserializeIPMIMessage(buf io.Reader, ipmiMessageLen int) (*ipmiMessage, er
 }
 
 func (i *ipmi) handle() ([]byte, error) {
+	log.Info("HERE!!!")
 	netFunction := (i.message.TargetLun & 0xFC) >> 2
 
 	switch netFunction {
